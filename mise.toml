@@ -1,0 +1,15 @@
+[tools]
+python = "3.13"
+uv = "latest"
+
+[tasks.setup]
+description = "Create venv and install deps"
+run = "uv sync"
+
+[tasks.secrets]
+description = "Pull .env from Infisical (personal org, project unifi-mcp)"
+run = "infisical export --env=dev --format=dotenv > .env"
+
+[tasks.mcp]
+description = "Run the MCP server (stdio) with secrets injected from Infisical"
+run = "infisical run --env=dev --silent -- .venv/bin/unifi-mcp-server"

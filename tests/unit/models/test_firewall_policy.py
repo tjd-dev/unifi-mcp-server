@@ -450,6 +450,18 @@ class TestFirewallPolicy:
         assert policy.name == "Block Web Categories"
         assert policy.action == "BLOCK"
 
+    def test_web_domains_field_on_match_target(self):
+        """WEB targets should persist the FQDN allow/block list."""
+        from src.models.firewall_policy import MatchTarget, MatchingTarget
+
+        target = MatchTarget(
+            zone_id="zone-external",
+            matching_target=MatchingTarget.WEB,
+            matching_target_type="SPECIFIC",
+            web_domains=["snu.lge.com", "su.lge.com"],
+        )
+        assert target.web_domains == ["snu.lge.com", "su.lge.com"]
+
 
 class TestFirewallPolicyCreate:
     """Tests for FirewallPolicyCreate model (for API requests)."""

@@ -2414,6 +2414,38 @@ class TestCreateFirewallPolicyNewFields:
                 confirm=True,
             )
 
+    @pytest.mark.asyncio
+    async def test_create_with_destination_web_domains_dry_run(
+        self, local_settings: Settings
+    ) -> None:
+        """destination_web_domains auto-sets WEB matching on the destination."""
+        from src.tools.firewall_policies import create_firewall_policy
+
+        with patch("src.tools.firewall_policies.UniFiClient") as MockClient:
+            mock_client = AsyncMock()
+            MockClient.return_value.__aenter__.return_value = mock_client
+            mock_client.is_authenticated = True
+
+            result = await create_firewall_policy(
+                name="Allow LG OTA",
+                action="ALLOW",
+                site_id="default",
+                settings=local_settings,
+                source_client_macs=["38:06:e6:6e:2c:8c"],
+                destination_web_domains=["snu.lge.com", "su-ssl.lge.com"],
+                dry_run=True,
+            )
+
+        assert result["status"] == "dry_run"
+        destination = result["policy"]["destination"]
+        assert destination["matching_target"] == "WEB"
+        assert destination["matching_target_type"] == "SPECIFIC"
+        assert destination["web_domains"] == ["snu.lge.com", "su-ssl.lge.com"]
+        source = result["policy"]["source"]
+        assert source["matching_target"] == "CLIENT"
+        assert source["client_macs"] == ["38:06:e6:6e:2c:8c"]
+        mock_client.post.assert_not_called()
+
 
 class TestGetZonePolicyMatrix:
     """Tests for get_zone_policy_matrix function."""

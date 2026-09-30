@@ -58,6 +58,9 @@ class MatchTarget(BaseModel):
     regions: list[str] | None = Field(None, description="ISO country codes for REGION matching")
     client_macs: list[str] | None = Field(None, description="MAC addresses for CLIENT matching")
     match_mac: bool | None = Field(None, description="Match by MAC address")
+    web_domains: list[str] | None = Field(
+        None, description="FQDNs / domains for WEB matching (SNI/DNS)"
+    )
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
 

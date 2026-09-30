@@ -40,6 +40,7 @@ def _build_match_target(
     ips: list[str] | None = None,
     network_ids: list[str] | None = None,
     client_macs: list[str] | None = None,
+    web_domains: list[str] | None = None,
     match_opposite_ips: bool | None = None,
 ) -> dict[str, Any]:
     """Build a source/destination match-target dict for a firewall policy.
@@ -61,6 +62,7 @@ def _build_match_target(
     * ``NETWORK`` — match specific VLANs via ``network_ids``
     * ``CLIENT`` — match specific MACs via ``client_macs``
     * ``REGION`` — match by ISO country codes (not wired yet)
+    * ``WEB`` — match FQDNs / domains via ``web_domains`` (SNI/DNS)
 
     Both discriminators are auto-selected based on which fields the caller
     provides, so callers don't have to think about the mode fields.
@@ -109,6 +111,8 @@ def _build_match_target(
             resolved_matching_target = "NETWORK"
         elif client_macs:
             resolved_matching_target = "CLIENT"
+        elif web_domains:
+            resolved_matching_target = "WEB"
 
     target: dict[str, Any] = {
         "matching_target": resolved_matching_target,
@@ -133,6 +137,8 @@ def _build_match_target(
         target["network_ids"] = list(network_ids)
     if client_macs is not None:
         target["client_macs"] = list(client_macs)
+    if web_domains is not None:
+        target["web_domains"] = list(web_domains)
     if match_opposite_ips is not None:
         target["match_opposite_ips"] = match_opposite_ips
     return target
@@ -525,6 +531,7 @@ async def create_firewall_policy(
     destination_network_ids: list[str] | None = None,
     source_client_macs: list[str] | None = None,
     destination_client_macs: list[str] | None = None,
+    destination_web_domains: list[str] | None = None,
     source_match_opposite_ips: bool | None = None,
     destination_match_opposite_ips: bool | None = None,
     protocol: str = "all",
@@ -557,7 +564,7 @@ async def create_firewall_policy(
         destination_zone_id: Destination zone (same identifier flexibility as
             source)
         source_matching_target: ANY, IP, NETWORK, REGION, or CLIENT
-        destination_matching_target: ANY, IP, NETWORK, or REGION
+        destination_matching_target: ANY, IP, NETWORK, REGION, or WEB
         source_port: Source port — single port "53" or range "9000-9010".
             Implies ``source_port_matching_type=SPECIFIC``.
         destination_port: Destination port — same format as source_port.
@@ -586,6 +593,9 @@ async def create_firewall_policy(
         source_client_macs: List of source client MAC addresses.
             Auto-sets ``source_matching_target=CLIENT``.
         destination_client_macs: List of destination client MACs.
+        destination_web_domains: List of FQDNs / domains (e.g.
+            ``["snu.lge.com", "su-ssl.lge.com"]``). Auto-sets
+            ``destination_matching_target=WEB``.
         source_match_opposite_ips: Invert the source IP match (NOT)
         destination_match_opposite_ips: Invert the destination IP match
         protocol: all, tcp, udp, tcp_udp, or icmpv6
@@ -705,6 +715,7 @@ async def create_firewall_policy(
                 ips=destination_ips,
                 network_ids=destination_network_ids,
                 client_macs=destination_client_macs,
+                web_domains=destination_web_domains,
                 match_opposite_ips=destination_match_opposite_ips,
             )
 
@@ -818,6 +829,7 @@ async def update_firewall_policy(
     destination_network_ids: list[str] | None = None,
     source_client_macs: list[str] | None = None,
     destination_client_macs: list[str] | None = None,
+    destination_web_domains: list[str] | None = None,
     source_match_opposite_ips: bool | None = None,
     destination_match_opposite_ips: bool | None = None,
     create_allow_respond: bool | None = None,
@@ -1030,6 +1042,10 @@ async def update_firewall_policy(
         destination_target_overrides["matching_target"] = "CLIENT"
         destination_target_overrides["matching_target_type"] = "SPECIFIC"
         destination_target_overrides["client_macs"] = list(destination_client_macs)
+    if destination_web_domains is not None:
+        destination_target_overrides["matching_target"] = "WEB"
+        destination_target_overrides["matching_target_type"] = "SPECIFIC"
+        destination_target_overrides["web_domains"] = list(destination_web_domains)
     if destination_match_opposite_ips is not None:
         destination_target_overrides["match_opposite_ips"] = destination_match_opposite_ips
 
