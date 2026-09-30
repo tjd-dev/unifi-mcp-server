@@ -7,9 +7,9 @@ description = "Create venv and install deps"
 run = "uv sync"
 
 [tasks.secrets]
-description = "Pull .env from Infisical (personal org, project unifi-mcp)"
-run = "infisical export --env=dev --format=dotenv > .env"
+description = "Pull .env from Infisical (personal org, project personal, folder /unifi-mcp)"
+run = "infisical export --env=dev --path=/unifi-mcp --format=dotenv > .env"
 
 [tasks.mcp]
 description = "Run the MCP server (stdio) with secrets injected from Infisical"
-run = "infisical run --env=dev --silent -- .venv/bin/unifi-mcp-server"
+run = "infisical run --env=dev --path=/unifi-mcp --silent -- .venv/bin/unifi-mcp-server"
